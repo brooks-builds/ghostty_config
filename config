@@ -2,3 +2,4 @@ macos-option-as-alt = true
 keybind = alt+left=unbind
 keybind = alt+right=unbind
 keybind = shift+enter=text:\n
+font-family = Iosevka Term
