@@ -1,10 +1,12 @@
 void draw(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor);
 void sway(inout vec2 r);
+void calculateCoords(in vec2 fragCoord, out vec2 r);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec3 pixel = vec3(0.0);
-    vec2 r = fragCoord.xy / iResolution.xy;
+    vec2 r;
+    calculateCoords(fragCoord, r);
     vec3 gridColor = vec3(0.5, 0.5, 0.5);
     vec3 axesColor = vec3(0.0, 0.0, 0.9);
     float gridWidth = 0.002;
@@ -12,15 +14,18 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     sway(r);
    
-    for (float i = 0.0; i < 1.0; i+=tickWidth) {
-        if(abs(r.x - i) < gridWidth) pixel = gridColor;
-        if(abs(r.y - i) < gridWidth) pixel = gridColor;
-    }
+    if(mod(r.x, tickWidth) < gridWidth) pixel = gridColor;
+    if(mod(r.y, tickWidth) < gridWidth) pixel = gridColor;
 
     if(abs(r.x) < 0.005) pixel = axesColor;
-    if(abs(r.y) > 0.995) pixel = axesColor;
+    if(abs(r.y) < 0.005) pixel = axesColor;
 
     draw(fragColor, fragCoord, pixel);
+}
+
+void calculateCoords(in vec2 fragCoord, out vec2 r) {
+    vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.xy;
+    r = 2.0 * halfCoord.xy / iResolution.xy;
 }
 
 void sway(inout vec2 r) {
