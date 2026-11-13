@@ -1,15 +1,24 @@
-void draw(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor);
+void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor);
 void sway(inout vec2 r);
 vec2 calculateCoords(in vec2 fragCoord);
 void drawGrid(in vec2 r, inout vec3 pixel);
+void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec3 pixel = vec3(0.0);
     vec2 r = calculateCoords(fragCoord);
     sway(r);
-    drawGrid(r, pixel);
-    draw(fragColor, fragCoord, pixel);
+
+    vec3 red = vec3(0.3, 0.0, 0.0);
+    vec3 green = vec3(0.0, 0.4, 0.0);
+    vec3 blue = vec3(0.0, 0.1, 0.5);
+
+    drawCircle(r, pixel, 0.8, vec2(0, 0), green);
+    drawCircle(r, pixel, 0.4, vec2(0, 0), blue);
+    drawCircle(r, pixel, 0.2, vec2(0.5, -0.4), red);
+    
+    keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
 
 void drawGrid(in vec2 r, inout vec3 pixel) {
@@ -28,14 +37,15 @@ void drawGrid(in vec2 r, inout vec3 pixel) {
 vec2 calculateCoords(in vec2 fragCoord) {
     vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.xy;
     return 2.0 * halfCoord.xy / iResolution.y;
+    return halfCoord;
 }
 
 void sway(inout vec2 r) {
-    r.x += sin(r.y * 10.0 + iTime) * 0.005;
-    r.y += sin(r.x * 10.0 + iTime) * 0.005;
+    r.x += sin(r.y * 10.0 + iTime) * 0.055;
+    r.y += sin(r.x * 10.0 + iTime) * 0.055;
 }
 
-void draw(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor)
+void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor)
 {
     vec3 originalColor = texture(iChannel0, fragCoord.xy / iResolution.xy).rgb;
     float threshold = 0.197;
@@ -48,4 +58,10 @@ void draw(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor)
         // we want to display what is already there
         fragColor = vec4(originalColor, alpha);
     }
+}
+
+void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color) {
+    vec2 translation = r - loc;
+
+    if (length(translation) < radius) pixel = color;
 }
