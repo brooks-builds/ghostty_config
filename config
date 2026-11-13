@@ -4,8 +4,7 @@ keybind = alt+right=unbind
 keybind = shift+enter=text:\n
 font-family = Ioskeley Mono
 custom-shader-animation = always
-custom-shader = shaders/cursor_warp.glsl
-custom-shader = shaders/sonic_boom_cursor.glsl
-# custom-shader = ./sandbox_shaders/hello_world.glsl
-# custom-shader = ./sandbox_shaders/flame.glsl
-
+# custom-shader = shaders/cursor_warp.glsl
+# custom-shader = shaders/sonic_boom_cursor.glsl
+custom-shader = exploring_shaders/following_tutorial.glsl
+background = black
