@@ -8,16 +8,39 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec3 pixel = vec3(0.0);
     vec2 r = calculateCoords(fragCoord);
-    sway(r);
+    float xMax = iResolution.x/iResolution.y; // getting the ratio for the screen, however I don't understand why and how this works yet.
+    // sway(r);
 
     vec3 red = vec3(0.3, 0.0, 0.0);
     vec3 green = vec3(0.0, 0.4, 0.0);
     vec3 blue = vec3(0.0, 0.1, 0.5);
+    vec3 yellow = vec3(0.3, 0.4, 0.0);
+    vec3 cyan = vec3(0.4, 0.1, 0.8);
 
-    drawCircle(r, pixel, 0.8, vec2(0, 0), green);
-    drawCircle(r, pixel, 0.4, vec2(0, 0), blue);
-    drawCircle(r, pixel, 0.2, vec2(0.5, -0.4), red);
-    
+    float edge, variable, ret;
+
+    if (r.x < -0.6 * xMax) {
+        variable = r.y;
+        edge = 0.2;
+        if (variable > edge) {
+            ret = 1.0;
+        } else {
+            ret = 0.0;
+        }
+    } else if (r.x < -0.2 * xMax) {
+        variable = r.y;
+        edge = -0.2;
+        ret = step(edge, variable); // equivalent to the if statement above
+    } else if (r.x < 0.2 * xMax) {
+        ret = 1.0 - step(0.5, r.y);
+    } else if (r.x < 0.6 * xMax) {
+        ret = 0.3 + 0.5 * step(-0.4, r.y);
+    } else {
+        ret = step(-0.3, r.y) * (1.0 - step(0.2, r.y));
+    }
+
+    pixel = vec3(ret);
+
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
 
