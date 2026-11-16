@@ -9,10 +9,9 @@ float smootherstep(float edge0, float edge1, float x);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-    // vec2 r = calculateCoords(fragCoord);
-    vec2 r =  2.0*vec2(fragCoord.xy - 0.5*iResolution.xy)/iResolution.y;
+    vec2 r = calculateCoords(fragCoord);
     vec2 p = fragCoord.xy / iResolution.xy;
-    // sway(r);
+    sway(p);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
@@ -23,16 +22,25 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     vec3 pixel = black;
 
-    float ret = 0.0;
+    vec3 ret = black;
 
     if (p.x < 0.25) {
-        ret = step(0.5, p.y);
+        float x0 = 0.2;
+        float x1 = 0.7;
+        float m = 0.1; // percentage of mixture (10% x1, 90% x0)
+        float mix = x0 * (1.0 - m) + x1 * m;
+        ret = vec3(mix);
     } else if (p.x < 0.5) {
-        ret = smoothstep(0.45, 0.55, p.y);
+        float x0 = 0.2;
+        float x1 = 0.7;
+        float m = p.y;
+        ret = vec3(mix(x0, x1, m));
     } else if (p.x < 0.75) {
-        ret = smoothstep(0.45, 0.55, p.y);
+        float m = p.y;
+        ret = mix(red, blue, m);
     } else {
-        ret = smootherstep(0.45, 0.55, p.y);
+        float m = smootherstep(0.45, 0.55, p.y);
+        ret = mix(cyan, yellow, m);
     }
 
     pixel = vec3(ret);
