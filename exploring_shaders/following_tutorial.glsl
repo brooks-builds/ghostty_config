@@ -5,6 +5,7 @@ void sway(inout vec2 r);
 vec2 calculateCoords(in vec2 fragCoord);
 void drawGrid(in vec2 r, inout vec3 pixel);
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
+float smootherstep(float edge0, float edge1, float x);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -22,30 +23,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     vec3 pixel = black;
 
-    float edge, variable;
     float ret = 0.0;
 
     if (p.x < 0.25) {
-        ret = r.y;
+        ret = step(0.5, p.y);
     } else if (p.x < 0.5) {
-        // manually implementing clamp
-        float min = 0.1;
-        float max = 0.9;
-        if (p.y <= min) {
-            ret = min;
-        } else if (p.y >= max) {
-            ret = max;
-        } else {
-            ret = p.y;
-        }
+        ret = smoothstep(0.45, 0.55, p.y);
     } else if (p.x < 0.75) {
-        float min = 0.3;
-        float max = 0.6;
-        ret = clamp(p.y, min, max);
+        ret = smoothstep(0.45, 0.55, p.y);
     } else {
-        float y = cos(5.0*TWOPI*p.y );
-        y = (y + 1.0) * 0.5; // remap y to 0-1
-        ret = clamp(y, 0.2, 0.8);
+        ret = smootherstep(0.45, 0.55, p.y);
     }
 
     pixel = vec3(ret);
@@ -96,4 +83,9 @@ void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color) {
     vec2 translation = r - loc;
 
     if (length(translation) < radius) pixel = color;
+}
+
+float smootherstep(float edge0, float edge1, float x) {
+    float t = clamp((x - edge0)/(edge1 - edge0), 0., 1.);
+    return pow(t, 3)*(t*(t*6. - 15.) + 10.);
 }
