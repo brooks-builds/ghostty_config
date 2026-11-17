@@ -1,4 +1,5 @@
 #define TWOPI 6.28318530718
+#define PI 3.14159265359
 
 void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor);
 void sway(inout vec2 r);
@@ -7,65 +8,63 @@ void drawGrid(in vec2 r, inout vec3 pixel);
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
 float smootherstep(float edge0, float edge1, float x);
 float linearstep(float edge0, float edge1, float x);
+void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec2 r = calculateCoords(fragCoord);
-    float xMax = iResolution.x / iResolution.y;
-    sway(r);
+    // sway(r);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
     vec3 green = vec3(0.0, 0.4, 0.0);
-    vec3 blue = vec3(0.0, 0.1, 0.5);
-    vec3 yellow = vec3(0.3, 0.4, 0.0);
+    vec3 blue = vec3(0.2, 0.25, 0.8);
+    vec3 yellow = vec3(0.8, 0.8, 0.5);
     vec3 cyan = vec3(0.4, 0.1, 0.8);
 
     vec3 background = black;
     vec3 pixel = background;
 
-    float radius = 0.4;
+    drawGrid(r, pixel);
 
-    if (r.x < -0.5 * xMax) {
-        float m = step(radius, length(r - vec2(-0.5 * xMax - 0.4, 0.0)));
-        pixel = mix(red, background, m);
-    } else if (r.x < -0.0 * xMax) {
-        float edge = 0.005;
-        float m = linearstep(radius - edge, radius + edge, length(r - vec2(-0.0 * xMax - 0.4, 0.0)));
-        pixel = mix(red, background, m);
-    } else if (r.x < 0.5 * xMax) {
-        float edge = 0.005;
-        float m = smoothstep(radius - edge, radius + edge, length(r - vec2(0.5 * xMax - 0.4, 0.0)));
-        pixel = mix(red, background, m);
-    } else if (r.x < 1.0 * xMax) {
-        float edge = 0.005;
-        float m = smootherstep(radius - edge, radius + edge, length(r - vec2(1.0 * xMax - 0.4, 0.0)));
-        pixel = mix(red, background, m);
-    }
+    float thickness = 0.025;
+    // y = 2x + 0.5
+    plot(r, 2.0 * r.x + 0.5, 0.02, green, pixel);
+    // y = x^2 - .2
+    if (abs(pow(r.x, 2) - 0.2 -r.y) < 0.02) pixel = red; 
+    // y = sin(PI x)
+    if (abs(sin(PI * r.x) - r.y) < 0.02) pixel = red;
 
-    drawCircle(r, pixel, radius, vec2(0.0, -0.8), green);
+    if (abs(0.25 * step(0.0, r.x) + 0.6 - r.y) < 0.01) pixel = blue;
+    if (abs(0.25 * linearstep(-0.5, 0.5, r.x) + 0.1 - r.y) < 0.01) pixel = blue;
+    if (abs(0.25 * smoothstep(-0.5, 0.5, r.x) - 0.4 - r.y) < 0.01) pixel = blue;
+    if (abs(0.25 * smootherstep(-0.5, 0.5, r.x) - 0.9 - r.y) < 0.01) pixel = blue;
+
+    plot(r, 0.5 * (clamp(sin(TWOPI * r.x), 0.0, 1.0) - 0.7), 0.015, yellow, pixel);
+    plot(r, 0.6 * exp(-10.0 * (r.x + 0.8) * (r.x + 0.8)) + 0.3, 0.015, yellow, pixel);
     
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
 
+
 void drawGrid(in vec2 r, inout vec3 pixel) {
-    vec3 gridColor = vec3(0.2);
-    vec3 axesColor = vec3(0.0, 0.0, 0.9);
-    float gridWidth = 0.002;
+    vec3 gridColor = vec3(0.3);
+    vec3 axesColor = vec3(0.0, 0.0, 1.0);
+    float gridWidth = 0.004;
     float tickWidth = 0.1;
     
     if(mod(r.x, tickWidth) < gridWidth) pixel = gridColor;
     if(mod(r.y, tickWidth) < gridWidth) pixel = gridColor;
 
-    if(abs(r.x) < 0.005) pixel = axesColor;
-    if(abs(r.y) < 0.005) pixel = axesColor;
+    if(abs(r.x) < 0.006) pixel = axesColor;
+    if(abs(r.y) < 0.007) pixel = axesColor;
 }
 
 vec2 calculateCoords(in vec2 fragCoord) {
     vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.xy;
+    halfCoord.y *= -1.0;
     return 2.0 * halfCoord.xy / iResolution.y;
-    return halfCoord;
 }
 
 void sway(inout vec2 r) {
@@ -104,4 +103,8 @@ float smootherstep(float edge0, float edge1, float x) {
 float linearstep(float edge0, float edge1, float x) {
 	float t = (x - edge0)/(edge1 - edge0);
 	return clamp(t, 0.0, 1.0);
+}
+
+void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel) {
+    if (abs(y - r.y) < lineThickness) pixel = color;
 }
