@@ -6,12 +6,13 @@ vec2 calculateCoords(in vec2 fragCoord);
 void drawGrid(in vec2 r, inout vec3 pixel);
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
 float smootherstep(float edge0, float edge1, float x);
+float linearstep(float edge0, float edge1, float x);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec2 r = calculateCoords(fragCoord);
-    vec2 p = fragCoord.xy / iResolution.xy;
-    sway(p);
+    float xMax = iResolution.x / iResolution.y;
+    sway(r);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
@@ -20,30 +21,30 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 yellow = vec3(0.3, 0.4, 0.0);
     vec3 cyan = vec3(0.4, 0.1, 0.8);
 
-    vec3 pixel = black;
+    vec3 background = black;
+    vec3 pixel = background;
 
-    vec3 ret = black;
+    float radius = 0.4;
 
-    if (p.x < 0.25) {
-        float x0 = 0.2;
-        float x1 = 0.7;
-        float m = 0.1; // percentage of mixture (10% x1, 90% x0)
-        float mix = x0 * (1.0 - m) + x1 * m;
-        ret = vec3(mix);
-    } else if (p.x < 0.5) {
-        float x0 = 0.2;
-        float x1 = 0.7;
-        float m = p.y;
-        ret = vec3(mix(x0, x1, m));
-    } else if (p.x < 0.75) {
-        float m = p.y;
-        ret = mix(red, blue, m);
-    } else {
-        float m = smootherstep(0.45, 0.55, p.y);
-        ret = mix(cyan, yellow, m);
+    if (r.x < -0.5 * xMax) {
+        float m = step(radius, length(r - vec2(-0.5 * xMax - 0.4, 0.0)));
+        pixel = mix(red, background, m);
+    } else if (r.x < -0.0 * xMax) {
+        float edge = 0.005;
+        float m = linearstep(radius - edge, radius + edge, length(r - vec2(-0.0 * xMax - 0.4, 0.0)));
+        pixel = mix(red, background, m);
+    } else if (r.x < 0.5 * xMax) {
+        float edge = 0.005;
+        float m = smoothstep(radius - edge, radius + edge, length(r - vec2(0.5 * xMax - 0.4, 0.0)));
+        pixel = mix(red, background, m);
+    } else if (r.x < 1.0 * xMax) {
+        float edge = 0.005;
+        float m = smootherstep(radius - edge, radius + edge, length(r - vec2(1.0 * xMax - 0.4, 0.0)));
+        pixel = mix(red, background, m);
     }
 
-    pixel = vec3(ret);
+    drawCircle(r, pixel, radius, vec2(0.0, -0.8), green);
+    
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
@@ -90,10 +91,17 @@ void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColo
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color) {
     vec2 translation = r - loc;
 
-    if (length(translation) < radius) pixel = color;
+    if (length(translation) < radius) {
+        pixel = color;
+    }
 }
 
 float smootherstep(float edge0, float edge1, float x) {
     float t = clamp((x - edge0)/(edge1 - edge0), 0., 1.);
     return pow(t, 3)*(t*(t*6. - 15.) + 10.);
+}
+
+float linearstep(float edge0, float edge1, float x) {
+	float t = (x - edge0)/(edge1 - edge0);
+	return clamp(t, 0.0, 1.0);
 }
