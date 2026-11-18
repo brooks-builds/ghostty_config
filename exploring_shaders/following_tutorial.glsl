@@ -41,17 +41,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
         -sin(angle) * r.x + cos(angle) * r.y
     );
 
-    sway(rotatedR);
+    // float scaleFactor = 3.3;
+    float scaleFactor = abs(sin(iTime) * 3.0);
+    vec2 scaledR = rotatedR / scaleFactor;
+    pixel = mix(pixel, red, inGrid(scaledR) * 0.5);
+    pixel = mix(pixel, red, insideCircle(scaledR, vec2(0.0, 0.0), 0.1));
+    pixel = mix(pixel, red, insideRect(scaledR, vec2(-0.5, 0.0), vec2(-0.2, 0.2)));
 
-    pixel = mix(pixel, blue, inGrid(r) * 0.4);
-    pixel = mix(pixel, blue, insideCircle(r, vec2(1.0, 0.0), 0.2));
-    pixel = mix(pixel, blue, insideRect(r, vec2(-0.8, 0.2), vec2(-0.5, 0.4)));
-
-    pixel = mix(pixel, red, inGrid(rotatedR));
-    pixel = mix(pixel, red, insideCircle(rotatedR, vec2(1.0, 0.0), 0.2));
-    pixel = mix(pixel, red, insideRect(rotatedR, vec2(-0.8, 0.2), vec2(-0.5, 0.4)));
-    // float insideCircle(vec2 r, vec2 location, float radius);
-
+    pixel = mix(pixel, blue, inGrid(r) * 0.5);
+    pixel = mix(pixel, blue, insideCircle(r, vec2(0.0, 0.0), 0.1));
+    pixel = mix(pixel, blue, insideRect(r, vec2(-0.5, 0.0), vec2(-0.2, 0.2)));
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
