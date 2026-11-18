@@ -12,6 +12,7 @@ void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel);
 float insideCircle(vec2 r, vec2 location, float radius);
 float toRadians(float angle);
 float insideRect(vec2 r, vec2 topLeft, vec2 bottomRight);
+vec2 rotateVec2(float radians, vec2 toRotate);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -33,24 +34,33 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 background = black;
     vec3 pixel = background;
 
-    // float rotateBy = 0.2;
-    float rotateBy = iTime / 50.0;
-    float angle = toRadians(rotateBy);
-    vec2 rotatedR = vec2(
-        cos(angle) * r.x + sin(angle) * r.y,
-        -sin(angle) * r.x + cos(angle) * r.y
-    );
-
-    // float scaleFactor = 3.3;
-    float scaleFactor = abs(sin(iTime) * 3.0);
-    vec2 scaledR = rotatedR / scaleFactor;
-    pixel = mix(pixel, red, inGrid(scaledR) * 0.5);
-    pixel = mix(pixel, red, insideCircle(scaledR, vec2(0.0, 0.0), 0.1));
-    pixel = mix(pixel, red, insideRect(scaledR, vec2(-0.5, 0.0), vec2(-0.2, 0.2)));
-
-    pixel = mix(pixel, blue, inGrid(r) * 0.5);
-    pixel = mix(pixel, blue, insideCircle(r, vec2(0.0, 0.0), 0.1));
-    pixel = mix(pixel, blue, insideRect(r, vec2(-0.5, 0.0), vec2(-0.2, 0.2)));
+    // float angle = toRadians(0.2);
+    float angle = toRadians(iTime * 0.1);
+    vec2 translateBy = vec2(sin(iTime), cos(iTime));
+    
+    if (p.x < 1./2.) {
+        vec2 leftR = r - vec2(-xMax * 0.5, 0.0);
+        vec2 rotatedR = rotateVec2(angle, leftR);
+        vec2 rotatedTranslatedR = rotatedR - translateBy;
+        
+        pixel = mix(pixel, blue, inGrid(leftR) * 0.5);
+        pixel = mix(pixel, blue, insideRect(leftR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+        pixel = mix(pixel, red, inGrid(rotatedR) * 0.5);
+        pixel = mix(pixel, red, insideRect(rotatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+        pixel = mix(pixel, yellow, inGrid(rotatedTranslatedR) * 0.3);
+        pixel = mix(pixel, yellow, insideRect(rotatedTranslatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+    } else {
+        vec2 rightR = r - vec2(xMax * 0.5, 0.0);
+        vec2 translated = rightR - translateBy;
+        vec2 tranlsatedRotatedR = rotateVec2(angle, translated);
+        
+        pixel = mix(pixel, blue, inGrid(rightR) * 0.5);
+        pixel = mix(pixel, blue, insideRect(rightR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+        pixel = mix(pixel, red, inGrid(translated) * 0.5);
+        pixel = mix(pixel, red, insideRect(translated, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+        pixel = mix(pixel, yellow, inGrid(tranlsatedRotatedR) * 0.3);
+        pixel = mix(pixel, yellow, insideRect(tranlsatedRotatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+    }
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
@@ -149,4 +159,11 @@ float toRadians(float angle) {
     float pi = 3.14159265359;
 
     return angle * pi;
+}
+
+vec2 rotateVec2(float radians, vec2 toRotate) {
+    return vec2(
+        cos(radians) * toRotate.x + sin(radians) * toRotate.y,
+        -sin(radians) * toRotate.x + cos(radians) * toRotate.y
+    );
 }
