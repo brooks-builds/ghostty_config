@@ -12,7 +12,7 @@ void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel);
 float insideCircle(vec2 r, vec2 location, float radius);
 float toRadians(float angle);
 float insideRect(vec2 r, vec2 topLeft, vec2 bottomRight);
-vec2 rotateVec2(float radians, vec2 toRotate);
+vec2 rotateVec2(float angle, vec2 toRotate);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -20,6 +20,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec2 p = fragCoord.xy / iResolution.xy; // percentage of the screen we're on
     float xMax = iResolution.x / iResolution.y; // ratio of the screen
        
+    // sway(p);
     // sway(r);
 
     vec3 black = vec3(0.0);
@@ -28,41 +29,65 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 blue = vec3(0.2, 0.25, 0.8);
     vec3 yellow = vec3(0.8, 0.8, 0.5);
     vec3 cyan = vec3(0.4, 0.1, 0.8);
-    vec3 gray = vec3(0.4);
+    vec3 darkGray = vec3(0.2);
+    vec3 gray = vec3(0.3);
+    vec3 lightGray = vec3(0.4);
     vec3 white = vec3(1.0);
 
     vec3 background = black;
     vec3 pixel = background;
 
-    // float angle = toRadians(0.2);
-    float angle = toRadians(iTime * 0.001);
-    vec2 translateBy = vec2(sin(iTime * 0.01), cos(iTime * 0.01));
-    
-    if (p.x < 1./2.) {
-        vec2 leftR = r - vec2(-xMax * 0.5, 0.0);
-        vec2 rotatedR = rotateVec2(angle, leftR);
-        vec2 rotatedTranslatedR = rotatedR - translateBy;
-        
-        pixel = mix(pixel, blue, inGrid(leftR) * 0.5);
-        pixel = mix(pixel, blue, insideRect(leftR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
-        pixel = mix(pixel, red, inGrid(rotatedR) * 0.5);
-        pixel = mix(pixel, red, insideRect(rotatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
-        pixel = mix(pixel, yellow, inGrid(rotatedTranslatedR) * 0.3);
-        pixel = mix(pixel, yellow, insideRect(rotatedTranslatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+    if (p.x < 1./5.) {
+        vec2 q = r + vec2(xMax * 4./5., 0.0);
+        pixel = darkGray;
+        float x = 0.0;
+        float y = mod(iTime, 2.0) - 1.0;
+        float radius = 0.1;
+        pixel = mix(pixel, blue, insideCircle(q, vec2(x, y), radius));
+    } else if (p.x < 2./5.) {
+        pixel = gray;
+        vec2 q = r + vec2(xMax * 2./5., 0.0);
+        float x = 0.0;
+        float y = sin(iTime * TWOPI * 0.5) * 0.75;
+        float radius = 0.05 * sin(iTime * 8.0) + 0.15;
+        pixel = mix(pixel, blue, insideCircle(q, vec2(x, y), radius));
+    } else if (p.x < 3./5.) {
+        pixel = lightGray;
+        vec2 q = r + vec2(xMax * 0./5., 0.0);
+        float width = 0.1;
+        float x = cos(iTime * 5.0) * 0.2;
+        float y = sin(iTime * 5.0 * -1.)  * 0.3;
+        vec3 color = mix(blue, red, sin(iTime) * 0.5 + 0.5);
+        pixel = mix(pixel, color, insideRect(q, vec2(x - 0.5 * width, y - 0.5 * width), vec2(x + 0.5 * width, y + 0.5 * width)));
+    } else if (p.x < 4./5.) {
+        pixel = gray;
+        vec2 q = r + vec2(xMax * -2./5., 0.0);
+        float width = 0.1;
+
+        for (float i = -1.0; i <= 1.0; i+= 0.2) {
+            float x = cos(iTime * 5. + i * PI) * 0.2;
+            float y = i;
+            vec2 s = q - vec2(x, y);
+            float angle = -1.0 * (iTime * 3.0 + i);
+
+            s = rotateVec2(angle, s);
+            pixel = mix(pixel, blue, insideRect(s, vec2(-0.5 * width), vec2(0.5 * width)));
+        }
     } else {
-        vec2 rightR = r - vec2(xMax * 0.5, 0.0);
-        vec2 translated = rightR - translateBy;
-        vec2 tranlsatedRotatedR = rotateVec2(angle, translated);
-        
-        pixel = mix(pixel, blue, inGrid(rightR) * 0.5);
-        pixel = mix(pixel, blue, insideRect(rightR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
-        pixel = mix(pixel, red, inGrid(translated) * 0.5);
-        pixel = mix(pixel, red, insideRect(translated, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
-        pixel = mix(pixel, yellow, inGrid(tranlsatedRotatedR) * 0.3);
-        pixel = mix(pixel, yellow, insideRect(tranlsatedRotatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
+        pixel = darkGray;
+        vec2 q = r + vec2(xMax * -4./5., 0.0);
+        float speed = 2.0;
+        float time = iTime * speed;
+        float stopEveryAngle = PI * 0.5; // PI * 0.5 == 90 degrees
+        float t = (floor(time) + smoothstep(0.0, 0.5, fract(time))) * stopEveryAngle;
+        float width = sin(time * 10.0) * 0.03 + 0.1;
+        float height = sin(time * 10.0 + PI) * 0.03 + 0.1;
+        float x = cos(t) * -0.2;
+        float y = sin(t) * 0.3;
+
+        pixel = mix(pixel, blue, insideRect(q, vec2(x - 0.5 * width, y - 0.5 * height), vec2(x + 0.5 * width, y + 0.5 * height)));
     }
 
-    pixel = mix(pixel, black, 0.75);
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
@@ -163,9 +188,7 @@ float toRadians(float angle) {
     return angle * pi;
 }
 
-vec2 rotateVec2(float radians, vec2 toRotate) {
-    return vec2(
-        cos(radians) * toRotate.x + sin(radians) * toRotate.y,
-        -sin(radians) * toRotate.x + cos(radians) * toRotate.y
-    );
+vec2 rotateVec2(float angle, vec2 toRotate) {
+    mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    return toRotate * rotation;
 }
