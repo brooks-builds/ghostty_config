@@ -35,8 +35,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 pixel = background;
 
     // float angle = toRadians(0.2);
-    float angle = toRadians(iTime * 0.1);
-    vec2 translateBy = vec2(sin(iTime), cos(iTime));
+    float angle = toRadians(iTime * 0.001);
+    vec2 translateBy = vec2(sin(iTime * 0.01), cos(iTime * 0.01));
     
     if (p.x < 1./2.) {
         vec2 leftR = r - vec2(-xMax * 0.5, 0.0);
@@ -61,6 +61,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
         pixel = mix(pixel, yellow, inGrid(tranlsatedRotatedR) * 0.3);
         pixel = mix(pixel, yellow, insideRect(tranlsatedRotatedR, vec2(-0.1, -0.2), vec2(0.1, 0.2)));
     }
+
+    pixel = mix(pixel, black, 0.75);
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
 }
