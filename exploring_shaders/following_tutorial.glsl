@@ -2,7 +2,7 @@
 #define PI 3.14159265359
 
 void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor);
-void sway(inout vec2 r);
+void sway(inout vec2 r, float scale);
 vec2 calculateCoords(in vec2 fragCoord);
 float inGrid(vec2 r);
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
@@ -17,11 +17,12 @@ vec2 rotateVec2(float angle, vec2 toRotate);
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec2 r = calculateCoords(fragCoord); // r.xy == [-1.0, 1.0]
+    float scale = 8.0;
+    vec2 sr = r * scale;
     vec2 p = fragCoord.xy / iResolution.xy; // percentage of the screen we're on
     float xMax = iResolution.x / iResolution.y; // ratio of the screen
        
-    // sway(p);
-    // sway(r);
+    // sway(p, 2.0);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
@@ -37,56 +38,28 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 background = black;
     vec3 pixel = background;
 
-    if (p.x < 1./5.) {
-        vec2 q = r + vec2(xMax * 4./5., 0.0);
-        pixel = darkGray;
-        float x = 0.0;
-        float y = mod(iTime, 2.0) - 1.0;
-        float radius = 0.1;
-        pixel = mix(pixel, blue, insideCircle(q, vec2(x, y), radius));
-    } else if (p.x < 2./5.) {
-        pixel = gray;
-        vec2 q = r + vec2(xMax * 2./5., 0.0);
-        float x = 0.0;
-        float y = sin(iTime * TWOPI * 0.5) * 0.75;
-        float radius = 0.05 * sin(iTime * 8.0) + 0.15;
-        pixel = mix(pixel, blue, insideCircle(q, vec2(x, y), radius));
-    } else if (p.x < 3./5.) {
-        pixel = lightGray;
-        vec2 q = r + vec2(xMax * 0./5., 0.0);
-        float width = 0.1;
-        float x = cos(iTime * 5.0) * 0.2;
-        float y = sin(iTime * 5.0 * -1.)  * 0.3;
-        vec3 color = mix(blue, red, sin(iTime) * 0.5 + 0.5);
-        pixel = mix(pixel, color, insideRect(q, vec2(x - 0.5 * width, y - 0.5 * width), vec2(x + 0.5 * width, y + 0.5 * width)));
-    } else if (p.x < 4./5.) {
-        pixel = gray;
-        vec2 q = r + vec2(xMax * -2./5., 0.0);
-        float width = 0.1;
+    float plasmaV1 = sin(sr.x + iTime);
+    float plasmaV2 = sin(sr.y + iTime);
+    float plasmaV3 = sin(sr.x + sr.y + iTime);
+    float plasmaV4 = sin(length(sr) + iTime * 1.7);
+    float plasmaV5 = plasmaV1 + plasmaV2 + plasmaV3 + plasmaV4;
 
-        for (float i = -1.0; i <= 1.0; i+= 0.2) {
-            float x = cos(iTime * 5. + i * PI) * 0.2;
-            float y = i;
-            vec2 s = q - vec2(x, y);
-            float angle = -1.0 * (iTime * 3.0 + i);
 
-            s = rotateVec2(angle, s);
-            pixel = mix(pixel, blue, insideRect(s, vec2(-0.5 * width), vec2(0.5 * width)));
-        }
+    if (p.x < 1./10.) {
+        pixel = vec3(plasmaV1);
+    } else if (p.x < 2./10.) {
+        pixel = vec3(plasmaV2);
+    } else if (p.x < 3./10.) {
+        pixel = vec3(plasmaV3);
+    } else if (p.x < 4./10.) {
+        pixel = vec3(plasmaV4);
+    } else if (p.x < 5./10.) {
+        pixel = vec3(plasmaV5);
+    } else if (p.x < 6./10.) {
+        pixel = vec3(sin(2.0 * plasmaV5));
     } else {
-        pixel = darkGray;
-        vec2 q = r + vec2(xMax * -4./5., 0.0);
-        float speed = 2.0;
-        float time = iTime * speed;
-        float stopEveryAngle = PI * 0.5; // PI * 0.5 == 90 degrees
-        float t = (floor(time) + smoothstep(0.0, 0.5, fract(time))) * stopEveryAngle;
-        float width = sin(time * 10.0) * 0.03 + 0.1;
-        float height = sin(time * 10.0 + PI) * 0.03 + 0.1;
-        float x = cos(t) * -0.2;
-        float y = sin(t) * 0.3;
-
-        pixel = mix(pixel, blue, insideRect(q, vec2(x - 0.5 * width, y - 0.5 * height), vec2(x + 0.5 * width, y + 0.5 * height)));
-    }
+        pixel = vec3(sin(plasmaV5), sin(plasmaV5 + 0.5 * PI), sin(plasmaV5 + PI));
+    } 
 
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
@@ -118,9 +91,9 @@ vec2 calculateCoords(in vec2 fragCoord) {
     return 2.0 * halfCoord.xy / iResolution.y;
 }
 
-void sway(inout vec2 r) {
-    r.x += sin(r.y * 10.0 + iTime) * 0.055;
-    r.y += sin(r.x * 10.0 + iTime) * 0.055;
+void sway(inout vec2 r, float scale) {
+    r.x += sin(r.y * scale + iTime) * 0.055;
+    r.y += sin(r.x * scale + iTime) * 0.055;
 }
 
 void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor)
