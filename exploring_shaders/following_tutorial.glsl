@@ -13,6 +13,7 @@ float insideCircle(vec2 r, vec2 location, float radius);
 float toRadians(float angle);
 float insideRect(vec2 r, vec2 topLeft, vec2 bottomRight);
 vec2 rotateVec2(float angle, vec2 toRotate);
+vec2 getCursorPosition();
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -21,8 +22,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec2 sr = r * scale;
     vec2 p = fragCoord.xy / iResolution.xy; // percentage of the screen we're on
     float xMax = iResolution.x / iResolution.y; // ratio of the screen
-       
-    // sway(p, 2.0);
+    vec2 cursorPosition = getCursorPosition();
+    
+    sway(r, 1.0);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
@@ -35,23 +37,26 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 lightGray = vec3(0.4);
     vec3 white = vec3(1.0);
 
-    vec3 background = iBackgroundColor;
+    vec3 background = vec3(pow(max(0.0, cursorPosition.x), 4.0)) * 0.25;
     vec3 pixel = background;
 
-    pixel = texture(iChannel0, p).xyz;
-    // pixel = texture(iChannel0, p + vec2(0.0, sin(iTime * 0.1))).xyz;
-    // keepOriginalTerminal(fragColor, fragCoord, pixel);
-    float stopEveryAngle = PI * 0.5;
-    float timeSinceWork = iTime - iTimeCursorChange;
-    float angle = toRadians(90.0);
+    float circleRadius = 0.3;
+    vec2 circlePosition = vec2(0.75, -0.7);
+    vec3 circleColor = mix(red, yellow, step(0.30, length(cursorPosition - circlePosition)));
 
-    vec2 translate = vec2(0.5);
-    vec2 c = p;
-    c = c - translate;
-    c = rotateVec2(angle, c);
-    c = c + translate;
-    pixel = texture(iChannel0, c).xyz;
-    fragColor = vec4(pixel, 1.0);
+    pixel = mix(pixel, circleColor, insideCircle(r, circlePosition, circleRadius));
+    pixel = mix(pixel, blue, insideCircle(r, cursorPosition, 0.1));
+
+    keepOriginalTerminal(fragColor, fragCoord, pixel);
+}
+
+vec2 getCursorPosition() {
+    vec2 position = iCurrentCursor.xy / iResolution.y;
+    position.y -= 0.5;
+    position.x -= (iResolution.x / iResolution.y) / 2.0;
+    position *= 2.0;
+
+    return position;
 }
 
 // inGrid, returns number 0-1, which is the percentage inside the grid, 0 is completely outside.
@@ -75,14 +80,16 @@ float inGrid(vec2 r) {
 }
 
 vec2 calculateCoords(in vec2 fragCoord) {
-    vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.y;
-    halfCoord.y *= -1.0;
-    return 2.0 * halfCoord.xy / iResolution.xy;
+    vec2 r = fragCoord.xy / iResolution.y;
+    r.y = r.y - 0.5;
+    r.x -= (iResolution.x / iResolution.y) / 2.0;
+    r *= 2.0;
+    return r;
 }
 
 void sway(inout vec2 r, float scale) {
-    r.x += sin(r.y * scale + iTime) * 0.055;
-    r.y += sin(r.x * scale + iTime) * 0.055;
+    r.x += sin(r.y + iTime) * 0.055;
+    r.y += sin(r.x + iTime) * 0.055;
 }
 
 void keepOriginalTerminal(out vec4 fragColor, in vec2 fragCoord, in vec3 newColor)
