@@ -35,34 +35,23 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 lightGray = vec3(0.4);
     vec3 white = vec3(1.0);
 
-    vec3 background = black;
+    vec3 background = iBackgroundColor;
     vec3 pixel = background;
 
-    float plasmaV1 = sin(sr.x + iTime);
-    float plasmaV2 = sin(sr.y + iTime);
-    float plasmaV3 = sin(sr.x + sr.y + iTime);
-    float plasmaV4 = sin(length(sr) + iTime * 1.7);
-    float plasmaV5 = plasmaV1 + plasmaV2 + plasmaV3 + plasmaV4;
+    pixel = texture(iChannel0, p).xyz;
+    // pixel = texture(iChannel0, p + vec2(0.0, sin(iTime * 0.1))).xyz;
+    // keepOriginalTerminal(fragColor, fragCoord, pixel);
+    float stopEveryAngle = PI * 0.5;
+    float timeSinceWork = iTime - iTimeCursorChange;
+    float angle = toRadians(90.0);
 
-
-    if (p.x < 1./10.) {
-        pixel = vec3(plasmaV1);
-    } else if (p.x < 2./10.) {
-        pixel = vec3(plasmaV2);
-    } else if (p.x < 3./10.) {
-        pixel = vec3(plasmaV3);
-    } else if (p.x < 4./10.) {
-        pixel = vec3(plasmaV4);
-    } else if (p.x < 5./10.) {
-        pixel = vec3(plasmaV5);
-    } else if (p.x < 6./10.) {
-        pixel = vec3(sin(2.0 * plasmaV5));
-    } else {
-        pixel = vec3(sin(plasmaV5), sin(plasmaV5 + 0.5 * PI), sin(plasmaV5 + PI));
-    } 
-
-
-    keepOriginalTerminal(fragColor, fragCoord, pixel);
+    vec2 translate = vec2(0.5);
+    vec2 c = p;
+    c = c - translate;
+    c = rotateVec2(angle, c);
+    c = c + translate;
+    pixel = texture(iChannel0, c).xyz;
+    fragColor = vec4(pixel, 1.0);
 }
 
 // inGrid, returns number 0-1, which is the percentage inside the grid, 0 is completely outside.
@@ -86,9 +75,9 @@ float inGrid(vec2 r) {
 }
 
 vec2 calculateCoords(in vec2 fragCoord) {
-    vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.xy;
+    vec2 halfCoord = fragCoord.xy - 0.5 * iResolution.y;
     halfCoord.y *= -1.0;
-    return 2.0 * halfCoord.xy / iResolution.y;
+    return 2.0 * halfCoord.xy / iResolution.xy;
 }
 
 void sway(inout vec2 r, float scale) {

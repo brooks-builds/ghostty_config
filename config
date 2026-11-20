@@ -6,5 +6,6 @@ font-family = Ioskeley Mono
 custom-shader-animation = always
 custom-shader = shaders/cursor_warp.glsl
 custom-shader = shaders/sonic_boom_cursor.glsl
-custom-shader = exploring_shaders/following_tutorial.glsl
+# custom-shader = exploring_shaders/following_tutorial.glsl
+custom-shader = exploring_shaders/test.glsl
 background = black
