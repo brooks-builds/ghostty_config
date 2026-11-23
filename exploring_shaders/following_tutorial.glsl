@@ -8,12 +8,14 @@ float inGrid(vec2 r);
 void drawCircle(vec2 r, inout vec3 pixel, float radius, vec2 loc, vec3 color);
 float smootherstep(float edge0, float edge1, float x);
 float linearstep(float edge0, float edge1, float x);
-void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel);
+float plot(vec2 r, float y);
 float insideCircle(vec2 r, vec2 location, float radius);
 float toRadians(float angle);
 float insideRect(vec2 r, vec2 topLeft, vec2 bottomRight);
 vec2 rotateVec2(float angle, vec2 toRotate);
 vec2 getCursorPosition();
+float hash(float seed);
+vec2 vec2Rand(float seed);
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -24,7 +26,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float xMax = iResolution.x / iResolution.y; // ratio of the screen
     vec2 cursorPosition = getCursorPosition();
     
-    sway(r, 1.0);
+    // sway(r, 1.0);
 
     vec3 black = vec3(0.0);
     vec3 red = vec3(0.3, 0.0, 0.0);
@@ -37,17 +39,21 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 lightGray = vec3(0.4);
     vec3 white = vec3(1.0);
 
-    vec3 background = vec3(pow(max(0.0, cursorPosition.x), 4.0)) * 0.25;
-    vec3 pixel = background;
+    vec3 background = darkGray;
+    vec3 pixel = black;
 
-    float circleRadius = 0.3;
-    vec2 circlePosition = vec2(0.75, -0.7);
-    vec3 circleColor = mix(red, yellow, step(0.30, length(cursorPosition - circlePosition)));
-
-    pixel = mix(pixel, circleColor, insideCircle(r, circlePosition, circleRadius));
-    pixel = mix(pixel, blue, insideCircle(r, cursorPosition, 0.1));
+    for(float i = 0.0; i < 5.0; i += 1.0) {
+        float seed = i + iTime;
+        vec2 position = vec2Rand(seed);
+        float size = clamp(hash(seed), 0.05, 0.2);
+        pixel = mix(pixel, blue, insideCircle(r, position, size));
+    }
 
     keepOriginalTerminal(fragColor, fragCoord, pixel);
+}
+
+float hash(float seed) {
+    return fract(sin(seed) * 2983746.12903847);
 }
 
 vec2 getCursorPosition() {
@@ -81,8 +87,8 @@ float inGrid(vec2 r) {
 
 vec2 calculateCoords(in vec2 fragCoord) {
     vec2 r = fragCoord.xy / iResolution.y;
-    r.y = r.y - 0.5;
     r.x -= (iResolution.x / iResolution.y) / 2.0;
+    r.y -= 0.5;
     r *= 2.0;
     return r;
 }
@@ -147,8 +153,9 @@ float linearstep(float edge0, float edge1, float x) {
 	return clamp(t, 0.0, 1.0);
 }
 
-void plot(vec2 r, float y, float lineThickness, vec3 color, inout vec3 pixel) {
-    if (abs(y - r.y) < lineThickness) pixel = color;
+float plot(vec2 r, float y) {
+    float smoothness = 0.005;
+    return step(abs(y - r.y), smoothness);
 }
 
 float toRadians(float angle) {
@@ -160,4 +167,11 @@ float toRadians(float angle) {
 vec2 rotateVec2(float angle, vec2 toRotate) {
     mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
     return toRotate * rotation;
+}
+
+vec2 vec2Rand(float seed) {
+    float x = hash(seed);
+    float y = hash(seed * 1.1);
+
+    return vec2(x, y);
 }

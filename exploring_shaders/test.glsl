@@ -76,9 +76,6 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     vec3 background = black;
     vec3 pixel = background;
 
-    vec3 color = vec3(inRect(vec2(0.0), vec2(0.1, 0.2), r));
-
-    pixel = mix(pixel, red, color);
 
     keepOriginalTerminal(fragCoord, pixel);
     fragColor = vec4(pixel, 1.0);
